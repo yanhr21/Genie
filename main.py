@@ -27,7 +27,7 @@ def main():
 
     if args.mode == "train":
         ### Trainer
-        runner = Runner(args.config_file)
+        runner = Runner(args.config_file, output_dir=args.output_path)
         runner.prepare_dataset()
         runner.prepare_models()
         runner.prepare_trainable_parameters()

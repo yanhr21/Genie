@@ -175,3 +175,17 @@ logs/
 output/
 evaluation_results/
 evaluation_results/*
+
+# local assets / checkpoints / generated files
+outputs/
+output_video/
+cosmos_pretrained/
+ltx_pretrained/
+pretrained_weights/
+*.mp4
+*.avi
+*.mov
+*.safetensors
+*.pth
+*.pth.tar
+*.bin

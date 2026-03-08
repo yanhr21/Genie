@@ -1,0 +1,201 @@
+model_name: cosmos2_gesim_iros2026_h20_val_vjepa2
+is_i2v: true
+report_to: None
+tracker_name: gesim_iros2026_h20_val_vjepa2
+use_rank_log_file: false
+logging_dir: logs
+output_dir: outputs/gesim_iros2026_h20_val_vjepa2
+pretrained_model_name_or_path: /apdcephfs_zwfy/share_303937731/yhr/Genie-Envisioner/cosmos_pretrained
+tokenizer_pretrained_model_name_or_path: /apdcephfs_zwfy/share_303937731/yhr/Genie-Envisioner/cosmos_pretrained
+tokenizer_class_path: transformers
+tokenizer_class: T5TokenizerFast
+textenc_class_path: transformers
+textenc_class: T5EncoderModel
+vae_class_path: models/cosmos_models/models/autoencoders/autoencoder_kl_wan.py
+vae_class: AutoencoderKLWan
+diffusion_model_class_path: models/cosmos_models/models/transformers/transformer_cosmos_multiview.py
+diffusion_model_class: MultiViewCosmosTransformer3DModel
+diffusion_scheduler_class_path: models/pipeline/gesim_cosmos2_pipeline_utils/scheduling_flow_match_euler_discrete.py
+diffusion_scheduler_class: FlowMatchEulerDiscreteScheduler
+diffusion_scheduler_args:
+  use_karras_sigmas: true
+pipeline_class_path: models/pipeline/gesim_pipeline.py
+pipeline_class: GeSimCosmos2Pipeline
+runner_class_path: runner/ge_trainer.py
+runner_class: Trainer
+sim_type: gesim
+train_data_class_path: data/iros_challenge_gesim_dataset.py
+train_data_class: IROSChallengeGESimDataset
+val_data_class_path: data/iros_challenge_gesim_dataset.py
+val_data_class: IROSChallengeGESimDataset
+return_action: false
+return_video: true
+action_loss_scale: 1.0
+action_cond_mode: true
+mixed_precision: bf16
+allow_tf32: false
+nccl_timeout: 600
+seed: 42
+vae_path: /apdcephfs_zwfy/share_303937731/yhr/Genie-Envisioner/cosmos_pretrained/vae
+enable_slicing: true
+enable_tiling: true
+train_mode: video_only
+train_steps: 1000000
+train_epochs: 10000
+steps_to_save: 1000
+steps_to_log: 20
+steps_to_val: 1000
+self_forcing: true
+self_forcing_rollout_chunks: 2
+self_forcing_prob: 1.0
+self_forcing_detach_mem: true
+self_forcing_random_step: true
+self_forcing_last_step_only: true
+train_first_frame_only_prob: 0.5
+rollout_holistic_loss: true
+rollout_holistic_rgb_weight: 0.02
+rollout_holistic_temporal_weight: 0.01
+rollout_holistic_edge_weight: 0.005
+rollout_holistic_decode_downsample: 2
+rollout_holistic_frame_stride: 2
+jepa:
+  ckpt_path: pretrained_weights/vjepa2_official/vjepa2-ac-vitg.pt
+  extract_layer: 14
+  pooling_mode: attn
+  num_queries: 4
+  num_heads: 8
+  causal_actions: true
+  metric:
+    frame_stride: 1
+  infer:
+    enabled: true
+    guidance_strength: 0.0
+    guidance_every_n: 3
+    guidance_start_pct: 0.2
+    guidance_end_pct: 0.8
+    rerank_candidates: 2
+    rerank_seed: 2026
+    frame_stride: 1
+  train:
+    loss_weight: 0.0
+    frame_stride: 1
+    repr_source: rollout_buffer
+val:
+  n_samples: 8
+  start_index: 0
+  sample_stride: 97
+  seed: 2026
+  write_video: true
+  first_frame_only: true
+  full_video: true
+  video_subdir: validation_videos
+caption_dropout_p: 0.06
+batch_size: 1
+dataloader_num_workers: 4
+gradient_checkpointing: false
+noise_to_first_frame: 0.05
+sigma_conditioning: 0.0001
+optimizer: adamw
+lr: 1e-6
+beta1: 0.9
+beta2: 0.95
+beta3: 0.999
+epsilon: 1e-8
+weight_decay: 1e-5
+optimizer_8bit: false
+optimizer_torchao: false
+scale_lr: false
+max_grad_norm: 1.0
+gradient_accumulation_steps: 1
+lr_scheduler: constant_with_warmup
+lr_warmup_steps: 500
+lr_num_cycles: 1
+lr_power: 1.0
+flow_weighting_scheme: none
+flow_logit_mean: 0.0
+flow_logit_std: 1.0
+flow_mode_scale: 1.29
+pixel_wise_timestep: false
+use_color_jitter: false
+noisy_video: false
+diffusion_model:
+  model_path: /apdcephfs_zwfy/share_303937731/yhr/Genie-Envisioner/cosmos_pretrained/ge_sim_cosmos_v0.1.safetensors
+  config:
+    in_channels: 26
+    out_channels: 16
+    num_attention_heads: 16
+    attention_head_dim: 128
+    num_layers: 28
+    mlp_ratio: 4.0
+    text_embed_dim: 1024
+    adaln_lora_dim: 256
+    max_size:
+    - 128
+    - 240
+    - 240
+    patch_size:
+    - 1
+    - 2
+    - 2
+    rope_scale:
+    - 1.0
+    - 3.0
+    - 3.0
+    concat_padding_mask: true
+    extra_pos_embed_type: null
+    use_view_embed: true
+    action_expert: false
+    action_in_channels: 7
+    action_num_attention_heads: 16
+    action_attention_head_dim: 32
+    action_rope_dim: 32
+data:
+  train:
+    data_roots:
+    - /apdcephfs_zwfy/share_303937731/yhr/agibot/data/AgiBotWorldChallenge-2026/WorldModel/iros_challenge_2026_acwm
+    split: train
+    unified_prompt: A robotic arm performing a manipulation task, best quality, consistent
+      and smooth motion.
+    sample_size:
+    - 384
+    - 512
+    sample_n_frames: 360
+    preprocess: resize
+    valid_cam:
+    - head
+    chunk: 25
+    action_chunk: 25
+    n_previous: 4
+    rollout_chunks: 2
+    stream_shuffle: true
+    stream_seed: 42
+    stream_infinite: false
+    stream_random_sample: true
+  val:
+    data_roots:
+    - /apdcephfs_zwfy/share_303937731/yhr/agibot/data/AgiBotWorldChallenge-2026/WorldModel/iros_challenge_2026_acwm
+    split: validation
+    unified_prompt: A robotic arm performing a manipulation task, best quality, consistent
+      and smooth motion.
+    sample_size:
+    - 384
+    - 512
+    sample_n_frames: 360
+    preprocess: resize
+    valid_cam:
+    - head
+    chunk: 25
+    action_chunk: 25
+    n_previous: 4
+num_inference_step: 15
+load_weights: true
+use_deepspeed: false
+ddp_find_unused_parameters: false
+deepspeed:
+  zero_optimization:
+    stage: 2
+  fp16:
+    enabled: false
+  bf16:
+    enabled: true
+  gradient_clipping: 1.0

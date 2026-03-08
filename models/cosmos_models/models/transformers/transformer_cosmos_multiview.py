@@ -411,6 +411,7 @@ class MultiViewCosmosTransformer3DModel(ModelMixin, ConfigMixin):
         return_action: bool = False,
         store_buffer=False,
         video_states_buffer=None,
+        store_buffer_indices=None,
         video_attention_mask: torch.Tensor = None,
         history_action_state: torch.Tensor = None,
         **kwargs,
@@ -431,7 +432,11 @@ class MultiViewCosmosTransformer3DModel(ModelMixin, ConfigMixin):
         if return_video or store_buffer:
 
             if store_buffer:
-                video_states_buffer = []
+                if store_buffer_indices is None:
+                    video_states_buffer = []
+                else:
+                    video_states_buffer = {}
+                    store_buffer_indices = {int(idx) for idx in store_buffer_indices}
 
             batch_size, num_channels, num_frames, height, width = hidden_states.shape
             
@@ -522,8 +527,14 @@ class MultiViewCosmosTransformer3DModel(ModelMixin, ConfigMixin):
                         block_idx % 3 == 0,
                     )
                     if store_buffer:
-                        video_states_buffer.append(hidden_states.clone())
+                        if store_buffer_indices is None or block_idx in store_buffer_indices:
+                            if isinstance(video_states_buffer, dict):
+                                video_states_buffer[block_idx] = hidden_states.clone()
+                            else:
+                                video_states_buffer.append(hidden_states.clone())
                 else:
+                    if video_states_buffer is None:
+                        raise ValueError("video_states_buffer must be provided when return_video=False and store_buffer=False.")
                     hidden_states = video_states_buffer[block_idx]
                 
                 if return_action:
@@ -553,8 +564,14 @@ class MultiViewCosmosTransformer3DModel(ModelMixin, ConfigMixin):
                         cross_view_attn=block_idx % 3 == 0
                     )
                     if store_buffer:
-                        video_states_buffer.append(hidden_states.clone())
+                        if store_buffer_indices is None or block_idx in store_buffer_indices:
+                            if isinstance(video_states_buffer, dict):
+                                video_states_buffer[block_idx] = hidden_states.clone()
+                            else:
+                                video_states_buffer.append(hidden_states.clone())
                 else:
+                    if video_states_buffer is None:
+                        raise ValueError("video_states_buffer must be provided when return_video=False and store_buffer=False.")
                     hidden_states = video_states_buffer[block_idx]
 
                 if return_action:

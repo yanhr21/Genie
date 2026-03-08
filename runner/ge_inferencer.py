@@ -183,10 +183,16 @@ class Inferencer:
         diffusion_scheduler_class = import_custom_class(
             self.args.diffusion_scheduler_class, getattr(self.args, "diffusion_scheduler_class_path", "diffusers")
         )
-        if hasattr(self.args, "diffusion_scheduler_args"):
+        scheduler_dir = os.path.join(str(self.args.pretrained_model_name_or_path), "scheduler")
+        if hasattr(diffusion_scheduler_class, "from_pretrained") and os.path.isdir(scheduler_dir):
+            self.scheduler = diffusion_scheduler_class.from_pretrained(scheduler_dir)
+            print(f"[Inferencer] Loaded diffusion scheduler from pretrained config: {scheduler_dir}")
+        elif hasattr(self.args, "diffusion_scheduler_args"):
             self.scheduler = diffusion_scheduler_class(**self.args.diffusion_scheduler_args)
+            print("[Inferencer] Loaded diffusion scheduler from `diffusion_scheduler_args`.")
         else:
             self.scheduler = diffusion_scheduler_class()
+            print("[Inferencer] Loaded diffusion scheduler with class defaults.")
 
         ### Import Inference Pipeline Class
         self.pipeline_class = import_custom_class(
@@ -200,7 +206,11 @@ class Inferencer:
         os.makedirs(model_save_dir,exist_ok=True)
 
         pipe = self.pipeline_class(
-            self.scheduler, self.vae, self.text_encoder, self.tokenizer, self.diffusion_model
+            scheduler=self.scheduler,
+            vae=self.vae,
+            text_encoder=self.text_encoder,
+            tokenizer=self.tokenizer,
+            transformer=self.diffusion_model,
         )
 
         assert(self.args.return_action | self.args.return_video)

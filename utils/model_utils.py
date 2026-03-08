@@ -177,6 +177,15 @@ def forward_pass(
 ) -> torch.Tensor:
     latent_frame_rate = frame_rate / temporal_compression_ratio
     rope_interpolation_scale = [1 / latent_frame_rate, spatial_compression_ratio, spatial_compression_ratio]
+    batch_tokens = noisy_latents.shape[0]
+    if prompt_embeds.shape[0] != batch_tokens:
+        if prompt_embeds.shape[0] * max(1, int(n_view)) == batch_tokens:
+            prompt_embeds = prompt_embeds.repeat_interleave(max(1, int(n_view)), dim=0)
+            prompt_attention_mask = prompt_attention_mask.repeat_interleave(max(1, int(n_view)), dim=0)
+        else:
+            raise ValueError(
+                f"prompt batch mismatch: prompt_embeds={prompt_embeds.shape[0]}, latents={batch_tokens}, n_view={n_view}"
+            )
     
     denoised_latents = model(
         hidden_states=noisy_latents,

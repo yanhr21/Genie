@@ -1,0 +1,195 @@
+model_name: 'cosmos2_gesim_iros2026_lora'
+is_i2v: True
+report_to: None
+tracker_name: gesim_iros2026_lora
+use_rank_log_file: false
+
+logging_dir: logs
+
+output_dir: outputs/gesim_iros2026_lora
+
+pretrained_model_name_or_path: /apdcephfs_zwfy/share_303937731/yhr/Genie-Envisioner/cosmos_pretrained
+tokenizer_pretrained_model_name_or_path: /apdcephfs_zwfy/share_303937731/yhr/Genie-Envisioner/cosmos_pretrained
+
+### Model classes
+tokenizer_class_path: transformers
+tokenizer_class: T5TokenizerFast
+textenc_class_path: transformers
+textenc_class: T5EncoderModel
+
+vae_class_path: models/cosmos_models/models/autoencoders/autoencoder_kl_wan.py
+vae_class: AutoencoderKLWan
+
+diffusion_model_class_path: models/cosmos_models/models/transformers/transformer_cosmos_multiview.py
+diffusion_model_class: MultiViewCosmosTransformer3DModel
+
+diffusion_scheduler_class_path: models/pipeline/gesim_cosmos2_pipeline_utils/scheduling_flow_match_euler_discrete.py
+diffusion_scheduler_class: FlowMatchEulerDiscreteScheduler
+diffusion_scheduler_args:
+  use_karras_sigmas: true
+
+pipeline_class_path: models/pipeline/gesim_pipeline.py
+pipeline_class: GeSimCosmos2Pipeline
+
+### Runner
+runner_class_path: runner/ge_trainer.py
+runner_class: Trainer
+sim_type: gesim
+
+### Dataset
+train_data_class_path: data/iros_challenge_gesim_dataset.py
+train_data_class: IROSChallengeGESimDataset
+val_data_class_path: data/iros_challenge_gesim_dataset.py
+val_data_class: IROSChallengeGESimDataset
+
+#
+return_action: false
+return_video: true
+action_loss_scale: 1.0
+action_cond_mode: true
+
+mixed_precision: bf16
+allow_tf32: False
+
+# timeout, seconds
+nccl_timeout: 600
+seed: 42
+
+# vae
+vae_path: /apdcephfs_zwfy/share_303937731/yhr/Genie-Envisioner/cosmos_pretrained/vae
+enable_slicing: True
+enable_tiling: True
+
+# Training mode
+train_mode: 'lora'
+lora_trainable_keywords:
+  - "norm1.linear_"
+  - "norm2.linear_"
+  - "norm3.linear_"
+  - "norm_out.linear_"
+
+# Training hyperparameters
+train_steps: 1000000
+train_epochs: 10000
+steps_to_save: 5000
+steps_to_log: 20
+steps_to_val: 5000
+
+val:
+  n_samples: 1
+  start_index: 0
+  sample_stride: 97
+  seed: 2026
+  write_video: true
+  first_frame_only: true
+  video_subdir: validation_videos
+
+caption_dropout_p: 0.06
+
+batch_size: 2
+dataloader_num_workers: 4
+
+gradient_checkpointing: False
+noise_to_first_frame: 0.05
+sigma_conditioning: 0.0001
+
+# Optimizer
+optimizer: adamw
+lr: 1e-5
+beta1: 0.9
+beta2: 0.95
+beta3: 0.999
+epsilon: 1e-8
+weight_decay: 1e-5
+optimizer_8bit: False
+optimizer_torchao: False
+scale_lr: False
+
+max_grad_norm: 1.0
+gradient_accumulation_steps: 1
+
+# lr_scheduler Config
+lr_scheduler: constant_with_warmup
+lr_warmup_steps: 500
+lr_num_cycles: 1
+lr_power: 1.0
+
+# Timestep Config (Cosmos uses different scheme than LTX)
+flow_weighting_scheme: none
+flow_logit_mean: 0.0
+flow_logit_std: 1.0
+flow_mode_scale: 1.29
+
+pixel_wise_timestep: False
+
+use_color_jitter: false
+noisy_video: false
+
+diffusion_model:
+  model_path: /apdcephfs_zwfy/share_303937731/yhr/Genie-Envisioner/cosmos_pretrained/ge_sim_cosmos_v0.1.safetensors
+
+  config:
+    in_channels: 26  # 16 (vae) + 3 (traj) + 6 (raymap) + 1 (padding mask)
+    out_channels: 16
+    num_attention_heads: 16
+    attention_head_dim: 128
+    num_layers: 28
+    mlp_ratio: 4.0
+    text_embed_dim: 1024
+    adaln_lora_dim: 256
+    max_size: [128, 240, 240]
+    patch_size: [1, 2, 2]
+    rope_scale: [1.0, 3.0, 3.0]
+    concat_padding_mask: true
+    extra_pos_embed_type: null
+    use_view_embed: true
+    action_expert: false
+    action_in_channels: 7
+    action_num_attention_heads: 16
+    action_attention_head_dim: 32
+    action_rope_dim: 32
+
+
+data:
+  train:
+    data_roots: ["/apdcephfs_zwfy/share_303937731/yhr/agibot/data/AgiBotWorldChallenge-2026/WorldModel/iros_challenge_2026_acwm"]
+    split: train
+    unified_prompt: "A robotic arm performing a manipulation task, best quality, consistent and smooth motion."
+    sample_size: [384, 512]
+    sample_n_frames: 360
+    preprocess: 'resize'
+    valid_cam: ['head']
+    chunk: 25   ### 4n+1 for cosmos without padding frames
+    action_chunk: 25
+    n_previous: 4
+    stream_shuffle: true
+    stream_seed: 42
+    stream_infinite: false
+    stream_random_sample: true
+  val:
+    data_roots: ["/apdcephfs_zwfy/share_303937731/yhr/agibot/data/AgiBotWorldChallenge-2026/WorldModel/iros_challenge_2026_acwm"]
+    split: train
+    unified_prompt: "A robotic arm performing a manipulation task, best quality, consistent and smooth motion."
+    sample_size: [384, 512]
+    sample_n_frames: 360
+    preprocess: 'resize'
+    valid_cam: ['head']
+    chunk: 25
+    action_chunk: 25
+    n_previous: 4
+
+num_inference_step: 15
+
+load_weights: true
+
+# distributed config
+use_deepspeed: false
+ddp_find_unused_parameters: false
+deepspeed:
+  zero_optimization:
+    stage: 2
+  fp16:
+    enabled: false
+  bf16:
+    enabled: true
+  gradient_clipping: 1.0

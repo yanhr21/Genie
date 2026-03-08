@@ -220,7 +220,11 @@ class InferenceLibero:
         )
         
         self.pipeline = self.pipeline_class(
-            self.scheduler, self.vae, self.text_encoder, self.tokenizer, self.diffusion_model
+            scheduler=self.scheduler,
+            vae=self.vae,
+            text_encoder=self.text_encoder,
+            tokenizer=self.tokenizer,
+            transformer=self.diffusion_model,
         )
         
     def prepare_simulator(self, ):

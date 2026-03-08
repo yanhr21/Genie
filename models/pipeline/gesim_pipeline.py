@@ -173,8 +173,18 @@ class GeSimCosmos2Pipeline(DiffusionPipeline):
             safety_checker=safety_checker,
         )
 
-        self.vae_scale_factor_temporal = 2 ** sum(self.vae.temperal_downsample) if getattr(self, "vae", None) else 4
-        self.vae_scale_factor_spatial = 2 ** len(self.vae.temperal_downsample) if getattr(self, "vae", None) else 8
+        if getattr(self, "vae", None):
+            # Keep compatibility with both WAN-style VAE (temperal_downsample) and generic VAEs.
+            temporal_flags = getattr(self.vae, "temperal_downsample", None)
+            if temporal_flags is not None:
+                self.vae_scale_factor_temporal = 2 ** sum(temporal_flags)
+                self.vae_scale_factor_spatial = 2 ** len(temporal_flags)
+            else:
+                self.vae_scale_factor_temporal = int(getattr(self.vae, "temporal_compression_ratio", 4))
+                self.vae_scale_factor_spatial = int(getattr(self.vae, "spatial_compression_ratio", 8))
+        else:
+            self.vae_scale_factor_temporal = 4
+            self.vae_scale_factor_spatial = 8
         self.video_processor = VideoProcessor(vae_scale_factor=self.vae_scale_factor_spatial)
 
         self.sigma_max = 80.0

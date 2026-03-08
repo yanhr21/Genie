@@ -7,13 +7,12 @@ def resize_traj_and_ray(traj_n_ray, mem_size, future_size, height, width):
     '''
     traj_n_ray: bv c t h w
     '''
-    orig_t = traj_n_ray.shape[3]
-    try:
-        assert orig_t > (mem_size + future_size)
-    except:
-        breakpoint()
-        
-    n_view = traj_n_ray.shape[2]
+    orig_t = traj_n_ray.shape[2]
+    target_t = int(mem_size) + int(future_size)
+    if orig_t < target_t:
+        raise ValueError(
+            f"traj_n_ray has insufficient timesteps: orig_t={orig_t}, required={target_t}"
+        )
 
     mem = traj_n_ray[:, :, :mem_size]
     mem = rearrange(mem, 'bv c t h w -> (bv t) c h w')

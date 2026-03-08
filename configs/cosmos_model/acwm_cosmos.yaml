@@ -22,7 +22,9 @@ diffusion_model_class_path: models/cosmos_models/models/transformers/transformer
 diffusion_model_class: MultiViewCosmosTransformer3DModel
 
 diffusion_scheduler_class_path: models/pipeline/gesim_cosmos2_pipeline_utils/scheduling_flow_match_euler_discrete.py
-diffusion_scheduler_class: FlowMatchEulerDiscreteScheduler 
+diffusion_scheduler_class: FlowMatchEulerDiscreteScheduler
+diffusion_scheduler_args:
+  use_karras_sigmas: true
 
 pipeline_class_path: models/pipeline/gesim_pipeline.py
 pipeline_class: GeSimCosmos2Pipeline

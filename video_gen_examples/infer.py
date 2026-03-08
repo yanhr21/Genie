@@ -115,7 +115,11 @@ def prepare_model(args, dtype=torch.bfloat16, device="cuda:0"):
     )
 
     pipe = pipeline_class(
-        scheduler, vae, text_encoder, tokenizer, diffusion_model
+        scheduler=scheduler,
+        vae=vae,
+        text_encoder=text_encoder,
+        tokenizer=tokenizer,
+        transformer=diffusion_model,
     )
 
     return tokenizer, text_encoder, vae, diffusion_model, scheduler, pipe
